@@ -23,7 +23,9 @@ public class MovingSphere : MonoBehaviour
 
     bool desiredJump;
 
-    bool onGround;
+    int groundContactCount;
+
+    bool OnGround => groundContactCount > 0;
 
     int jumpPhase;
 
@@ -52,8 +54,8 @@ public class MovingSphere : MonoBehaviour
         for (int i = 0; i < collision.contactCount; i++) {
             Vector3 normal = collision.GetContact(i).normal;
             if (normal.y >= minGropundDotProduct) {
-                onGround = true;
-                contactNormal = normal;
+                groundContactCount += 1;
+                contactNormal += normal;
             }
         }
     }
@@ -79,7 +81,7 @@ public class MovingSphere : MonoBehaviour
         var currentX = Vector3.Dot(velocity, xAxis);
         var currentZ = Vector3.Dot(velocity, zAxis);
         
-        var acceleration = onGround ? maxAcceleration : maxAirAcceleration;
+        var acceleration = OnGround ? maxAcceleration : maxAirAcceleration;
         var maxSpeedChange = acceleration * Time.deltaTime;
         var newX = Mathf.MoveTowards(currentX, desiredVelocity.x, maxSpeedChange);
         var newZ = Mathf.MoveTowards(currentZ, desiredVelocity.z, maxSpeedChange);
@@ -96,15 +98,26 @@ public class MovingSphere : MonoBehaviour
             Jump();
         }
 
-        body.velocity = velocity;
+        // GetComponent<Renderer>().material.SetColor(
+        //     "_Color", Color.white * (groundContactCount * 0.25f)
+        // );
 
-        onGround = false;
+        body.velocity = velocity;
+        ClearState();
+    }
+
+    void ClearState() {
+        groundContactCount = 0;
+        contactNormal = Vector3.zero;
     }
 
     void UpdateState() {
         velocity = body.velocity;
-        if (onGround) {
+        if (OnGround) {
             jumpPhase = 0;
+            if (groundContactCount > 1) {
+                contactNormal.Normalize();
+            }
         }
         else {
             contactNormal = Vector3.up;
@@ -112,7 +125,7 @@ public class MovingSphere : MonoBehaviour
     }
 
     void Jump() {
-        if (onGround || jumpPhase < maxAirJumps) {
+        if (OnGround || jumpPhase < maxAirJumps) {
             jumpPhase += 1;
             var jumpSpeed = Mathf.Sqrt(-2f * Physics.gravity.y * jumpHeight);
             var alignedSpeed = Vector3.Dot(velocity, contactNormal);
