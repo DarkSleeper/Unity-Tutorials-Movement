@@ -17,6 +17,15 @@ public class MovingSphere : MonoBehaviour
     [SerializeField, Range(0f, 90f)]
     float maxGroundAngle = 25f;
 
+    [SerializeField, Range(0f, 100f)]
+    float maxSnapSpeed = 100f;
+
+    [SerializeField, Min(0f)]
+    float probeDistance = 1f;
+
+    [SerializeField]
+    LayerMask probeMask = -1;
+
     Rigidbody body;
 
     Vector3 velocity, desiredVelocity;
@@ -32,6 +41,8 @@ public class MovingSphere : MonoBehaviour
     float minGropundDotProduct;
 
     Vector3 contactNormal;
+
+    int stepsSinceLastGrounded, stepsSinceLastJump;
 
     void OnValidate() {
         minGropundDotProduct = Mathf.Cos(maxGroundAngle * Mathf.Deg2Rad);
@@ -87,6 +98,10 @@ public class MovingSphere : MonoBehaviour
         var newZ = Mathf.MoveTowards(currentZ, desiredVelocity.z, maxSpeedChange);
 
         velocity += xAxis * (newX - currentX) + zAxis * (newZ - currentZ);
+
+        GetComponent<Renderer>().material.SetColor(
+            "_Color", OnGround ? Color.black : Color.white
+        );
     }
 
     void FixedUpdate() {
@@ -98,10 +113,6 @@ public class MovingSphere : MonoBehaviour
             Jump();
         }
 
-        // GetComponent<Renderer>().material.SetColor(
-        //     "_Color", Color.white * (groundContactCount * 0.25f)
-        // );
-
         body.velocity = velocity;
         ClearState();
     }
@@ -112,8 +123,11 @@ public class MovingSphere : MonoBehaviour
     }
 
     void UpdateState() {
+        stepsSinceLastGrounded += 1;
+        stepsSinceLastJump += 1;
         velocity = body.velocity;
-        if (OnGround) {
+        if (OnGround || SnapToGround()) {
+            stepsSinceLastGrounded = 0;
             jumpPhase = 0;
             if (groundContactCount > 1) {
                 contactNormal.Normalize();
@@ -126,6 +140,7 @@ public class MovingSphere : MonoBehaviour
 
     void Jump() {
         if (OnGround || jumpPhase < maxAirJumps) {
+            stepsSinceLastJump = 0;
             jumpPhase += 1;
             var jumpSpeed = Mathf.Sqrt(-2f * Physics.gravity.y * jumpHeight);
             var alignedSpeed = Vector3.Dot(velocity, contactNormal);
@@ -134,5 +149,30 @@ public class MovingSphere : MonoBehaviour
             }
             velocity += contactNormal * jumpSpeed;
         }
+    }
+
+    bool SnapToGround() {
+        if (stepsSinceLastGrounded > 1 || stepsSinceLastJump <= 2) {
+            return false;
+        }
+        var speed = velocity.magnitude;
+        if (speed > maxSnapSpeed) {
+            return false;
+        }
+        if (!Physics.Raycast(
+            body.position, Vector3.down, out RaycastHit hit, probeDistance, probeMask
+        )) {
+            return false;
+        }
+        if (hit.normal.y < minGropundDotProduct) {
+            return false;
+        }
+        groundContactCount = 1;
+        contactNormal = hit.normal;
+        var dot = Vector3.Dot(velocity, hit.normal);
+        if (dot > 0f) {
+            velocity = (velocity - hit.normal * dot).normalized * speed;
+        }
+        return true;
     }
 }
