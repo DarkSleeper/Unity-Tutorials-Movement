@@ -63,7 +63,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 8ddfe39628a02cb49ab4a8ecce908f6b, type: 2}
+  - {fileID: 2100000, guid: f3ba9cc2f46b74147a887fc2202e7d8e, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -118,7 +118,7 @@ TrailRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 35d7e371964d81942947319b48fff18c, type: 2}
+  - {fileID: 2100000, guid: 9a4d6d9dd5ce842cab93c08918e9f806, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -214,11 +214,15 @@ MonoBehaviour:
   jumpHeight: 2
   maxAirJumps: 1
   maxGroundAngle: 40
+  maxStairsAngle: 50
   maxSnapSpeed: 100
   probeDistance: 1
   probeMask:
     serializedVersion: 2
-    m_Bits: 51
+    m_Bits: 1075
+  stairsMask:
+    serializedVersion: 2
+    m_Bits: 1024
 --- !u!54 &6315726874829106891
 Rigidbody:
   m_ObjectHideFlags: 0
