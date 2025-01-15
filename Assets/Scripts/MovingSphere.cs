@@ -111,9 +111,9 @@ public class MovingSphere : MonoBehaviour
 
         velocity += xAxis * (newX - currentX) + zAxis * (newZ - currentZ);
 
-        GetComponent<Renderer>().material.SetColor(
-            "_Color", OnGround ? Color.black : Color.white
-        );
+        // GetComponent<Renderer>().material.SetColor(
+        //     "_Color", OnGround ? Color.black : Color.white
+        // );
     }
 
     void FixedUpdate() {
