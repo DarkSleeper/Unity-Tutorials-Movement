@@ -27,11 +27,26 @@ public class OrbitCamera: MonoBehaviour
     [SerializeField, Range(0f, 90f)]
     float alignSmoothRange = 45f;
 
+    [SerializeField]
+    LayerMask obstructionMask = -1;
+
     Vector3 focusPoint, previousFocusPoint;
 
     Vector2 orbitAngles = new Vector2(45f, 0f);
 
     float lastManualRotationTime;
+
+    Camera regularCamera;
+
+    Vector3 CameraHalfExtends {
+        get {
+            Vector3 halfExtends;
+            halfExtends.y = regularCamera.nearClipPlane * Mathf.Tan(0.5f * Mathf.Deg2Rad * regularCamera.fieldOfView);
+            halfExtends.x = halfExtends.y * regularCamera.aspect;
+            halfExtends.z = 0f;
+            return halfExtends;
+        }
+    }
 
     void OnValidate() {
         if (maxVerticalAngle < minVerticalAngle) {
@@ -40,6 +55,7 @@ public class OrbitCamera: MonoBehaviour
     }
 
     void Awake() {
+        regularCamera = GetComponent<Camera>();
         focusPoint = focus.position;
         transform.localRotation = Quaternion.Euler(orbitAngles);
     }
@@ -55,6 +71,21 @@ public class OrbitCamera: MonoBehaviour
         }
         var lookDirection = lookRotation * Vector3.forward;
         var lookPosition = focusPoint - lookDirection * distance;
+
+        var rectOffset = lookDirection * regularCamera.nearClipPlane;
+        var rectPosition = lookPosition + rectOffset;
+        var castFrom = focus.position;
+        var castLine = rectPosition - castFrom;
+        var castDistance = castLine.magnitude;
+        var castDirection = castLine / castDistance;
+
+        if (Physics.BoxCast(
+            castFrom, CameraHalfExtends, castDirection, out RaycastHit hit, lookRotation, castDistance, obstructionMask
+        )) {
+            rectPosition = castFrom + castDirection * hit.distance;
+            lookPosition = rectPosition - rectOffset;
+        }
+
         transform.SetPositionAndRotation(lookPosition, lookRotation);
     }
 
