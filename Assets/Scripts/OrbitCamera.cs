@@ -38,6 +38,10 @@ public class OrbitCamera: MonoBehaviour
 
     Camera regularCamera;
 
+    Quaternion gravityAlignment = Quaternion.identity;
+
+    Quaternion orbitRotation;
+
     Vector3 CameraHalfExtends {
         get {
             Vector3 halfExtends;
@@ -57,18 +61,17 @@ public class OrbitCamera: MonoBehaviour
     void Awake() {
         regularCamera = GetComponent<Camera>();
         focusPoint = focus.position;
-        transform.localRotation = Quaternion.Euler(orbitAngles);
+        transform.localRotation = orbitRotation = Quaternion.Euler(orbitAngles);
     }
 
     void LateUpdate() {
+        gravityAlignment = Quaternion.FromToRotation(gravityAlignment * Vector3.up, -Physics.gravity.normalized) * gravityAlignment;
         UpdateFocusPoint();
-        Quaternion lookRotation;
         if (ManualRotation() || AutomaticRotation()) {
             ConstrainAngles();
-            lookRotation = Quaternion.Euler(orbitAngles);
-        } else {
-            lookRotation = transform.localRotation;
+            orbitRotation = Quaternion.Euler(orbitAngles);
         }
+        var lookRotation = gravityAlignment * orbitRotation;
         var lookDirection = lookRotation * Vector3.forward;
         var lookPosition = focusPoint - lookDirection * distance;
 
@@ -132,10 +135,8 @@ public class OrbitCamera: MonoBehaviour
             return false;
         }
 
-        var movement = new Vector2(
-            focusPoint.x - previousFocusPoint.x,
-            focusPoint.z - previousFocusPoint.z
-        );
+        var alignedDelta = Quaternion.Inverse(gravityAlignment) * (focusPoint - previousFocusPoint);
+        var movement = new Vector2(alignedDelta.x, alignedDelta.z);
         var movementDeltaSqr = movement.sqrMagnitude;
         if (movementDeltaSqr < 0.0001f) {
             return false;
