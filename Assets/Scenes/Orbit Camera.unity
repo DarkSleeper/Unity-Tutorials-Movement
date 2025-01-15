@@ -8653,6 +8653,11 @@ MonoBehaviour:
   distance: 5
   focusRadius: 1
   focusCentering: 0.85
+  rotationSpeed: 90
+  minVerticalAngle: -30
+  maxVerticalAngle: 60
+  alignDelay: 5
+  alignSmoothRange: 45
 --- !u!850595691 &975447608
 LightingSettings:
   m_ObjectHideFlags: 0
