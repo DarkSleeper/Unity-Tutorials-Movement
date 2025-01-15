@@ -63,6 +63,7 @@ public class MovingSphere : MonoBehaviour
 
     void Awake() {
         body = GetComponent<Rigidbody>();
+        body.useGravity = false;
         OnValidate();
     }
 
@@ -131,14 +132,16 @@ public class MovingSphere : MonoBehaviour
     }
 
     void FixedUpdate() {
-        upAxis = -Physics.gravity.normalized;
+        var gravity = CustomGravity.GetGravity(body.position, out upAxis);
         UpdateState();
         AdjustVelocity();
 
         if (desiredJump) {
             desiredJump = false;
-            Jump();
+            Jump(gravity);
         }
+
+        velocity += gravity * Time.deltaTime;
 
         body.velocity = velocity;
         ClearState();
@@ -167,7 +170,7 @@ public class MovingSphere : MonoBehaviour
         }
     }
 
-    void Jump() {
+    void Jump(Vector3 gravity) {
         Vector3 jumpDirection;
         if (OnGround) {
             jumpDirection = contactNormal;
@@ -185,7 +188,7 @@ public class MovingSphere : MonoBehaviour
         
         stepsSinceLastJump = 0;
         jumpPhase += 1;
-        var jumpSpeed = Mathf.Sqrt(2f * Physics.gravity.magnitude * jumpHeight);
+        var jumpSpeed = Mathf.Sqrt(2f * gravity.magnitude * jumpHeight);
         jumpDirection = (jumpDirection + upAxis).normalized;
         var alignedSpeed = Vector3.Dot(velocity, jumpDirection);
         if (alignedSpeed > 0f) {
