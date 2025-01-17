@@ -29,9 +29,11 @@ public class MovingSphere : MonoBehaviour
     [SerializeField]
     LayerMask probeMask = -1, stairsMask = -1;
 
-    Rigidbody body;
+    Rigidbody body, connectedBody, previousConnectedBody;
 
-    Vector3 velocity, desiredVelocity;
+    Vector3 velocity, desiredVelocity, connectionVelocity;
+
+    Vector3 connectionWorldPosition, connectionLocalPosition;
 
     bool desiredJump;
 
@@ -83,9 +85,13 @@ public class MovingSphere : MonoBehaviour
             if (upDot >= minDot) {
                 groundContactCount += 1;
                 contactNormal += normal;
+                connectedBody = collision.rigidbody;
             } else if (upDot > -0.01f) {
                 steepContactCount += 1;
                 steepNormal += normal;
+                if (groundContactCount == 0) {
+                    connectedBody = collision.rigidbody;
+                }
             }
         }
     }
@@ -116,8 +122,9 @@ public class MovingSphere : MonoBehaviour
         var xAxis = ProjectDirectionOnPlane(rightAxis, contactNormal);
         var zAxis = ProjectDirectionOnPlane(forwardAxis, contactNormal);
 
-        var currentX = Vector3.Dot(velocity, xAxis);
-        var currentZ = Vector3.Dot(velocity, zAxis);
+        var relativeVelocity = velocity - connectionVelocity;
+        var currentX = Vector3.Dot(relativeVelocity, xAxis);
+        var currentZ = Vector3.Dot(relativeVelocity, zAxis);
         
         var acceleration = OnGround ? maxAcceleration : maxAirAcceleration;
         var maxSpeedChange = acceleration * Time.deltaTime;
@@ -149,7 +156,9 @@ public class MovingSphere : MonoBehaviour
 
     void ClearState() {
         groundContactCount = steepContactCount = 0;
-        contactNormal = steepNormal = Vector3.zero;
+        contactNormal = steepNormal = connectionVelocity = Vector3.zero;
+        previousConnectedBody = connectedBody;
+        connectedBody = null;
     }
 
     void UpdateState() {
@@ -168,6 +177,20 @@ public class MovingSphere : MonoBehaviour
         else {
             contactNormal = upAxis;
         }
+        if (connectedBody) {
+            if (connectedBody.isKinematic || connectedBody.mass >= body.mass) {
+                UpdateConnectionState();
+            }
+        }
+    }
+
+    void UpdateConnectionState() {
+        if (connectedBody == previousConnectedBody) {
+            var connectionMovement = connectedBody.transform.TransformPoint(connectionLocalPosition) - connectionWorldPosition;
+            connectionVelocity = connectionMovement / Time.deltaTime;
+        }
+        connectionWorldPosition = body.position;
+        connectionLocalPosition = connectedBody.transform.InverseTransformPoint(connectionWorldPosition);
     }
 
     void Jump(Vector3 gravity) {
@@ -221,6 +244,7 @@ public class MovingSphere : MonoBehaviour
         if (dot > 0f) {
             velocity = (velocity - hit.normal * dot).normalized * speed;
         }
+        connectedBody = hit.rigidbody;
         return true;
     }
 
