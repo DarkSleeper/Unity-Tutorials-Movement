@@ -38847,6 +38847,14 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6315726874829106890, guid: 0379d4707a828415494f18f6eb7a15be, type: 3}
+      propertyPath: buoyancy
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6315726874829106890, guid: 0379d4707a828415494f18f6eb7a15be, type: 3}
+      propertyPath: waterDrag
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6315726874829106890, guid: 0379d4707a828415494f18f6eb7a15be, type: 3}
       propertyPath: maxClimbSpeed
       value: 4
       objectReference: {fileID: 0}
