@@ -23206,7 +23206,7 @@ MonoBehaviour:
   upAlignmentSpeed: 360
   obstructionMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 3123
 --- !u!43 &1007692355
 Mesh:
   m_ObjectHideFlags: 0
@@ -38874,6 +38874,10 @@ PrefabInstance:
       propertyPath: playerInputSpace
       value: 
       objectReference: {fileID: 963194228}
+    - target: {fileID: 6315726874829106890, guid: 0379d4707a828415494f18f6eb7a15be, type: 3}
+      propertyPath: maxSwimAcceleration
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 6315726874829106890, guid: 0379d4707a828415494f18f6eb7a15be, type: 3}
       propertyPath: maxClimbAcceleration
       value: 40
