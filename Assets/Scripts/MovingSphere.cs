@@ -30,10 +30,10 @@ public class MovingSphere : MonoBehaviour
     float probeDistance = 1f;
 
     [SerializeField]
-    LayerMask probeMask = -1, stairsMask = -1, climbMask = -1;
+    LayerMask probeMask = -1, stairsMask = -1, climbMask = -1, waterMask = 0;
 
     [SerializeField]
-    Material normalMaterial = default, climbingMaterial = default;
+    Material normalMaterial = default, climbingMaterial = default, swimmingMaterial = default;
 
     Rigidbody body, connectedBody, previousConnectedBody;
 
@@ -59,6 +59,8 @@ public class MovingSphere : MonoBehaviour
 
     bool Climbing => climbContactCount > 0 && stepsSinceLastJump > 2;
 
+    bool InWater { get; set; }
+
     int stepsSinceLastGrounded, stepsSinceLastJump;
 
     Vector3 upAxis, rightAxis, forwardAxis;
@@ -81,6 +83,18 @@ public class MovingSphere : MonoBehaviour
         body.useGravity = false;
         meshRenderer = GetComponent<MeshRenderer>();
         OnValidate();
+    }
+
+    void OnTriggerEnter(Collider other) {
+        if ((waterMask & (1 << other.gameObject.layer)) != 0) {
+            InWater = true;
+        }
+    }
+    
+    void OnTriggerStay(Collider other) {
+        if ((waterMask & (1 << other.gameObject.layer)) != 0) {
+            InWater = true;
+        }
     }
 
     void OnCollisionEnter(Collision collision) {
@@ -137,7 +151,7 @@ public class MovingSphere : MonoBehaviour
         desiredJump |= Input.GetButtonDown("Jump");
         desiresClimbing = Input.GetButton("Climb");
 
-        meshRenderer.material = Climbing ? climbingMaterial : normalMaterial;
+        meshRenderer.material = Climbing ? climbingMaterial : InWater ? swimmingMaterial : normalMaterial;
     }
 
     Vector3 ProjectDirectionOnPlane(Vector3 direction, Vector3 normal) {
@@ -208,6 +222,7 @@ public class MovingSphere : MonoBehaviour
         contactNormal = steepNormal = connectionVelocity = climbNormal = Vector3.zero;
         previousConnectedBody = connectedBody;
         connectedBody = null;
+        InWater = false;
     }
 
     void UpdateState() {
@@ -295,7 +310,7 @@ public class MovingSphere : MonoBehaviour
             return false;
         }
         if (!Physics.Raycast(
-            body.position, -upAxis, out RaycastHit hit, probeDistance, probeMask
+            body.position, -upAxis, out RaycastHit hit, probeDistance, probeMask, QueryTriggerInteraction.Ignore
         )) {
             return false;
         }
